@@ -1,0 +1,7 @@
+# Shell scripts must keep Unix line endings or macOS and Linux cannot run them.
+*.sh   text eol=lf
+# Windows launchers must keep Windows line endings.
+*.bat  text eol=crlf
+*.cmd  text eol=crlf
+# Everything else: store as it is, let git sort out the rest.
+*      text=auto

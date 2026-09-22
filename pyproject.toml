@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nanodoc"
+version = "0.1.0"
+description = "Drag in a document. Ask it anything about it. No code, no terminal, no accounts."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "Priyanshu Agarwal" }]
+keywords = ["pdf", "document-qa", "local-llm", "offline-ai", "no-code", "rag", "gui"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: End Users/Desktop",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Topic :: Text Processing :: Indexing",
+]
+dependencies = []
+
+[project.scripts]
+nanodoc = "nanodoc.__main__:main"
+
+[project.urls]
+Homepage = "https://github.com/Agarwalrishu13/nanodoc"
+
+[tool.setuptools]
+packages = ["nanodoc"]
+include-package-data = true
+
+[tool.setuptools.package-data]
+nanodoc = ["web/*"]

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>nanoDoc — drag in a document, ask it anything</title>
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📄</text></svg>">
+</head>
+<body>
+
+<div class="app">
+  <!-- ------------------------------------------------------------ sidebar -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">📄</div>
+      <div>
+        <div class="brand-name">nanoDoc</div>
+        <div class="brand-sub">ask your documents anything</div>
+      </div>
+    </div>
+
+    <div class="sidebar-body">
+      <button class="add-button" id="add-button">
+        <span style="font-size:16px">＋</span> Add a document
+      </button>
+      <input type="file" id="file-input" hidden
+             accept=".pdf,.docx,.xlsx,.csv,.tsv,.txt,.md,.markdown,.log,.rst,.json,.yaml,.yml,.html,.htm,.xhtml">
+
+      <div class="section-title">Your documents</div>
+      <div id="doc-list"></div>
+      <div class="empty-note" id="doc-list-empty" hidden>
+        Nothing here yet. Drag a PDF, a Word file, a spreadsheet or a web page
+        onto this window and it will appear here.
+      </div>
+    </div>
+
+    <div class="sidebar-foot">
+      <button class="engine-chip" id="engine-chip">
+        <span class="dot" id="engine-dot"></span>
+        <span class="engine-text">
+          <span class="engine-name" id="engine-name">Looking for an AI…</span>
+          <span class="engine-sub" id="engine-sub">this computer only</span>
+        </span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- --------------------------------------------------------------- main -->
+  <main class="main">
+    <div class="wrap">
+
+      <!-- Nothing chosen yet -->
+      <section id="empty-view">
+        <h1>Ask your documents anything.</h1>
+        <p class="lede">
+          Drop a PDF, a Word document, a spreadsheet or a saved web page in here and
+          ask about it in your own words. Every answer shows you the exact
+          paragraph it came from, so you can check it. Nothing is uploaded and
+          nothing is installed.
+        </p>
+
+        <div class="dropzone" id="dropzone">
+          <div class="dropzone-icon">📄</div>
+          <div class="dropzone-title">Drag a document here</div>
+          <div class="dropzone-sub">or</div>
+          <button class="button primary" id="choose-button">Choose a file…</button>
+          <div class="formats">PDF · Word (.docx) · Excel (.xlsx) · CSV · text and Markdown · saved web pages</div>
+        </div>
+
+        <div id="read-notice"></div>
+
+        <h2>What happens to your file</h2>
+        <div class="cards">
+          <div class="card">
+            <h3>It stays here</h3>
+            <p>Your document is read on this computer and saved in your own home
+               folder. It is never uploaded, never sent anywhere, and it works
+               with the internet switched off.</p>
+          </div>
+          <div class="card">
+            <h3>You get the receipts</h3>
+            <p>Every answer comes with the paragraphs it was built from and the
+               page they are on. Click one and you are reading the document
+               itself, with the words that matched highlighted.</p>
+          </div>
+          <div class="card">
+            <h3>It says when it does not know</h3>
+            <p>If the answer is not in your document, you are told that plainly.
+               It will not quietly fill the gap with something it read
+               elsewhere.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- A document is open -->
+      <section id="doc-view" hidden>
+        <div class="doc-head">
+          <div class="doc-head-text">
+            <h1 id="doc-name">—</h1>
+            <div class="doc-facts" id="doc-facts"></div>
+          </div>
+          <button class="button small ghost" id="close-doc">Close</button>
+        </div>
+
+        <div id="doc-notices"></div>
+
+        <div id="doc-about"></div>
+
+        <div class="ask">
+          <div class="ask-box">
+            <textarea id="question" rows="1"
+                      placeholder="Ask anything about this document…"></textarea>
+            <button class="button primary" id="ask-button">Ask</button>
+          </div>
+          <div class="chips" id="chips"></div>
+        </div>
+
+        <div id="turns"></div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<!-- ----------------------------------------------------------- reader -->
+<div class="scrim" id="scrim" hidden></div>
+<aside class="reader" id="reader" hidden>
+  <div class="reader-head">
+    <div class="reader-title" id="reader-title">Reading</div>
+    <select class="reader-select" id="reader-select" title="Jump to another part"></select>
+    <button class="button small ghost" id="reader-close">Close</button>
+  </div>
+  <div class="reader-body">
+    <div class="reader-text" id="reader-text"></div>
+  </div>
+</aside>
+
+<!-- ------------------------------------------------------- engine modal -->
+<div class="modal" id="engine-modal" hidden>
+  <button class="modal-close" id="engine-close">✕</button>
+  <h2>The AI on this computer</h2>
+  <p class="lede" style="font-size:14px;margin-bottom:4px">
+    nanoDoc reads and searches your documents by itself. An AI engine is only
+    needed to turn the paragraphs it finds into a written answer — and if there
+    is one on this computer, it is used without anything leaving the machine.
+  </p>
+  <div id="engine-list"></div>
+  <div id="engine-actions"></div>
+</div>
+
+<!-- ----------------------------------------------------------- overlays -->
+<div class="drop-overlay" id="drop-overlay" hidden>
+  <div class="drop-overlay-inner">
+    <div class="big">📄</div>
+    <div class="title">Let go to add it</div>
+  </div>
+</div>
+<div class="toasts" id="toasts"></div>
+
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+env/
+
+# Local runtime data — never commit someone's chats or downloaded models
+data/
+models/*.bin
+models/*.gguf
+*.log
+
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

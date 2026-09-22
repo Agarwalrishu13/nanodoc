@@ -1,0 +1,5 @@
+# nanoDoc has no dependencies on purpose — the whole app is the Python
+# standard library. This file exists so that people who expect one are not
+# confused, and so `pip install -r requirements.txt` is a harmless no-op.
+#
+# You need Python 3.9 or newer. That is all.
