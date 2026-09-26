@@ -1478,7 +1478,6 @@ class _Document:
         self.undecodable_text = False
         self._cache = {}
         self._objstm = {}
-        self._objstm_index = {}
         self._fonts = {}
 
     # --- object access
@@ -1548,15 +1547,15 @@ class _Document:
         return _Stream(value, self, raw)
 
     def _object_in_stream(self, container: int, index: int):
-        """Fetch object number `index` out of object stream `container`.
+        """Fetch the object at position `index` inside object stream `container`.
 
-        An object stream starts with a table of `object number, offset` pairs;
-        each offset is counted from `/First`, where the objects themselves
-        begin.
+        The stream starts with a table of `object number, offset` pairs, where
+        each offset is counted from `/First`, and the xref stream refers to an
+        object by its *position* in that table, not by its number.
         """
         table = self._objstm.get(container)
         if table is None:
-            table = {}
+            table = []
             holder = self.get(container)
             if isinstance(holder, _Stream):
                 body = holder.data()
@@ -1564,24 +1563,27 @@ class _Document:
                 first = self.resolve(holder.dict.get("First"))
                 if body and isinstance(count, int) and isinstance(first, int):
                     if 0 <= first <= len(body):
+                        offsets = []
                         pos = 0
                         for _ in range(min(count, _MAX_OBJECTS)):
+                            # The pairs are whitespace-separated ("1 0 2 34 …"),
+                            # so skip runs of space before each number.
+                            pos = _skip_ws(body, pos)
                             m = _NUM_RE.match(body, pos)
                             if not m:
                                 break
-                            pos = m.end()
+                            pos = _skip_ws(body, m.end())
                             m2 = _NUM_RE.match(body, pos)
                             if not m2:
                                 break
                             pos = m2.end()
-                            try:
-                                table[int(m.group(0))] = self._parse_inner(
-                                    body, first + int(m2.group(0))
-                                )
-                            except Exception:
-                                pass
+                            offsets.append(int(m2.group(0)))
+                        for offset in offsets:
+                            table.append(self._parse_inner(body, first + offset))
             self._objstm[container] = table
-        return table.get(index)
+        if 0 <= index < len(table):
+            return table[index]
+        return None
 
     def _parse_inner(self, body: bytes, offset: int):
         if offset < 0 or offset > len(body):

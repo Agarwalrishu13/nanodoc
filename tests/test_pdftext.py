@@ -410,16 +410,16 @@ class TestFonts(unittest.TestCase):
         builder = _Builder()
         builder.add(b"<< /Type /Catalog /Pages 2 0 R >>")
         builder.add(b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>")
+        builder.add(b"")  # the page, filled in once the font number is known
         content = _positioned_by_td(text)
-        builder.add(
-            b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources "
-            b"<< /Font << /F1 5 0 R >> >> /Contents 4 0 R >>"
-        )
         builder.add(
             b"<< /Length %d >>\nstream\n" % len(content) + content + b"\nendstream"
         )
         font = _cid_font_objects(builder, _GLYPHS)
-        assert font == 5
+        builder.bodies[2] = (
+            b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources "
+            b"<< /Font << /F1 %d 0 R >> >> /Contents 4 0 R >>" % font
+        )
         return builder.build()
 
     def test_glyph_by_glyph_positioning_keeps_words_whole(self):
@@ -636,6 +636,11 @@ class TestCrossReferenceStreams(unittest.TestCase):
         result = pdftext.extract(bytes(out))
         self.assertEqual(len(result.pages), 1)
         self.assertEqual(result.pages[0].text, "Text from an object stream")
+        # The page tree really was read out of the object stream: if it were
+        # not, a whole-file scan would still find the words, so check that
+        # nothing had to be recovered.
+        self.assertEqual(result.pages[0].number, 1)
+        self.assertEqual(result.note, "")
 
 
 # ---------------------------------------------------------------------------

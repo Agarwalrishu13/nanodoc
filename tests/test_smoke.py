@@ -515,8 +515,10 @@ class TestEngine(unittest.TestCase):
     def test_money_sized_answers_are_asked_for_at_a_low_temperature(self):
         # Not a style preference: a question about a lease wants the document's
         # words, not the model's imagination.
-        source = open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                                   "nanodoc", "engine.py"), encoding="utf-8").read()
+        engine_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                                   "nanodoc", "engine.py")
+        with open(engine_path, encoding="utf-8") as handle:
+            source = handle.read()
         self.assertIn("temperature: float = 0.2", source)
 
     def test_installing_is_shown_before_it_is_run(self):
