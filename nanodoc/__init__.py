@@ -4,7 +4,7 @@ The document never leaves your computer. There is nothing to install, no
 account to create, and no server at the other end.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 APP_NAME = "nanoDoc"
 TAGLINE = "Drag in a document. Ask it anything about it."
 

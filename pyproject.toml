@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "nanodoc"
-version = "0.1.0"
+version = "0.2.0"
 description = "Drag in a document. Ask it anything about it. No code, no terminal, no accounts."
 readme = "README.md"
 requires-python = ">=3.9"

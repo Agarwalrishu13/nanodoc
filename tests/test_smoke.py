@@ -33,6 +33,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 _TEMPORARY_HOME = tempfile.mkdtemp(prefix="nanodoc-tests-")
 os.environ["NANODOC_HOME"] = _TEMPORARY_HOME
 
+from pathlib import Path  # noqa: E402
+
 from nanodoc import documents, engine, httpbase, search, server, store  # noqa: E402
 from nanodoc import pdftext  # noqa: E402
 
@@ -947,3 +949,49 @@ class TestPdfReading(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ExportTests(TestServer):
+    """The whole conversation saved as one readable file, sources included."""
+
+    def test_a_conversation_is_exported_with_its_sources(self):
+        body = json.dumps({
+            "title": "bridge report",
+            "turns": [
+                {"question": "What is the load limit?",
+                 "answer": "The report says 12 tonnes.",
+                 "hits": [{"label": "page 3", "number": 3, "snippet": "maximum load of 12 tonnes"}]},
+                {"question": "Who signed it?",
+                 "answer": "Nobody signed it.", "hits": []},
+            ],
+        }).encode("utf-8")
+        request = urllib.request.Request(
+            self.base + "/api/export", data=body,
+            headers={"Content-Type": "application/json"}, method="POST")
+        with urllib.request.urlopen(request, timeout=10) as response:
+            data = json.loads(response.read().decode("utf-8"))
+        self.assertTrue(data["ok"], data)
+        saved = Path(data["path"])
+        try:
+            self.assertTrue(saved.exists())
+            text = saved.read_text(encoding="utf-8")
+            self.assertIn("# bridge report", text)
+            self.assertIn("What is the load limit?", text)
+            self.assertIn("The report says 12 tonnes.", text)
+            self.assertIn("Where this came from", text)
+            self.assertIn("page 3", text)
+            self.assertIn("Question 2", text)
+        finally:
+            saved.unlink(missing_ok=True)
+
+    def test_exporting_nothing_is_explained(self):
+        body = json.dumps({"title": "empty", "turns": []}).encode("utf-8")
+        request = urllib.request.Request(
+            self.base + "/api/export", data=body,
+            headers={"Content-Type": "application/json"}, method="POST")
+        try:
+            urllib.request.urlopen(request, timeout=10)
+            self.fail("expected an error")
+        except urllib.error.HTTPError as exc:
+            self.assertEqual(exc.code, 400)
+            self.assertIn("nothing to export", exc.read().decode("utf-8").lower())

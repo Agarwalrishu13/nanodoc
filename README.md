@@ -19,6 +19,12 @@ and every answer shows you the exact paragraph it came from.
 > **Part of [the nano family](https://github.com/Agarwalrishu13/nano)** — eleven offline-first apps for people who do not code. This is the map of the whole project.
 
 
+## What's new in 0.2
+
+- **Export the whole conversation.** One press saves every question, every
+  answer and every "where this came from" page as a single readable file in
+  `~/.nanodoc/exports/` — ready to keep or share.
+
 ## What this is, in one paragraph
 
 Most people have documents they cannot get a straight answer out of: a tenancy

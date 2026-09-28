@@ -450,6 +450,7 @@ function ask() {
   };
   state.turns.push(turn);
   renderTurns();
+  $('export-button').hidden = false;
 
   const path = summary ? '/api/summary' : '/api/ask';
   streamEvents(path, { id: state.open.id, question }, (event) => handleEvent(turn, event))
@@ -815,6 +816,7 @@ function main() {
 
   $('close-doc').addEventListener('click', closeDocument);
   $('ask-button').addEventListener('click', ask);
+  $('export-button').addEventListener('click', exportSession);
 
   const box = $('question');
   box.addEventListener('input', () => autosize(box));
@@ -852,3 +854,20 @@ function main() {
 }
 
 main();
+
+// Save the whole conversation — questions, answers and their sources — as one file.
+async function exportSession() {
+  const turns = state.turns
+    .filter((turn) => turn.question && (turn.answer || turn.done))
+    .map((turn) => ({ question: turn.question, answer: turn.answer, hits: turn.hits || [] }));
+  if (!turns.length) { toast('Ask something first — then there is something to save.', 'bad'); return; }
+  try {
+    const data = await api.post('/api/export', {
+      title: (state.open && state.open.name) || 'nanoDoc conversation',
+      turns,
+    });
+    if (data.ok) toast('Saved to ' + data.path, 'good');
+  } catch (err) {
+    toast(String(err.message || err), 'bad');
+  }
+}

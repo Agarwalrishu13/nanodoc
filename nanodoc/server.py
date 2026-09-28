@@ -13,9 +13,11 @@ and the page says so plainly instead of failing.
 
 from __future__ import annotations
 
+import datetime as _dt
 import re
 import threading
 import uuid
+from urllib.parse import urlparse
 from pathlib import Path
 
 from . import documents, engine, httpbase, search, store
@@ -52,6 +54,23 @@ _CITATION = re.compile(r"\((?:page|part|section|sheet)\s+[^)]{1,60}\)", re.I)
 # before the app is willing to present it without a warning. See
 # `_answer_support` for why this check exists at all.
 SUPPORT_THRESHOLD = 0.4
+
+
+_OWN_ORIGINS = ("127.0.0.1", "localhost", "::1", "[::1]")
+
+
+def _from_local_page(request, require_json: bool = False) -> bool:
+    """The family's guard: only this app's own page may drive it."""
+    origin = request.header("Origin")
+    if origin:
+        host = urlparse(origin).hostname or ""
+        if host not in _OWN_ORIGINS:
+            return False
+    if require_json:
+        content_type = (request.header("Content-Type") or "").split(";")[0].strip()
+        if content_type != "application/json":
+            return False
+    return True
 
 
 def build_app(web_dir=None) -> App:
@@ -262,6 +281,47 @@ def build_app(web_dir=None) -> App:
         return Stream.sse(_answer_events(doc, index, "", True, chosen, model))
 
     # --------------------------------------------------------------- engines
+    @app.post("/api/export")
+    def export_session(request):
+        """The whole conversation, with its sources, as one readable file."""
+        if not _from_local_page(request, require_json=True):
+            return Error("This app only answers to pages on this computer.", 403)
+        payload = request.json() or {}
+        title = str(payload.get("title") or "nanoDoc conversation").strip()[:120]
+        turns = payload.get("turns") or []
+        if not turns:
+            return Error("There is nothing to export yet — ask a question first.")
+
+        lines = ["# %s" % title, "",
+                 "Saved from nanoDoc on %s. Every answer keeps the page it came from." % _dt.date.today().isoformat(), ""]
+        kept = 0
+        for number, turn in enumerate(turns, start=1):
+            question = str(turn.get("question") or "").strip()
+            answer = str(turn.get("answer") or "").strip()
+            if not question and not answer:
+                continue
+            kept += 1
+            lines += ["## Question %d" % kept, "", question, ""]
+            lines += [answer, ""]
+            hits = turn.get("hits") or []
+            if hits:
+                lines += ["**Where this came from**", ""]
+                for hit in hits:
+                    label = str(hit.get("label") or ("page %s" % hit.get("number", "?")))
+                    snippet = str(hit.get("snippet") or hit.get("text") or "").strip()
+                    lines.append("- %s: %s" % (label, ("“%s”" % snippet[:220]) if snippet else "(a source page)"))
+                lines.append("")
+        if not kept:
+            return Error("There is nothing to export yet — ask a question first.")
+
+        root = store.home() / "exports"
+        root.mkdir(parents=True, exist_ok=True)
+        stamp = _dt.datetime.now().strftime("%Y-%m-%d %H%M%S")
+        safe = re.sub(r"[^\w\- ]+", "", title)[:60].strip() or "conversation"
+        target = root / ("%s %s.md" % (safe, stamp))
+        target.write_text("\n".join(lines), encoding="utf-8")
+        return Json({"ok": True, "path": str(target)})
+
     @app.get("/api/engines")
     def engines(_request):
         settings = store.load_settings()
